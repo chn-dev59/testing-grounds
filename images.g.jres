@@ -1,0 +1,17 @@
+{
+    "image1": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAABVVVVVAAAAUPX//18FAABV/////1UAUPX/////XwVQ////////BVD///////8FUP///////wVQ////////BVD1/////18FAFX/////VQAAUPX//18FAAAAVVVVVQAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "charging"
+    },
+    "image2": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAACIiIiIAAAAgBgREYEIAACIEREREYgAgBgRERERgQiAERERERERCIAREREREREIgBEREREREQiAERERERERCIAYEREREYEIAIgRERERiAAAgBgREYEIAAAAiIiIiAAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "Idle"
+    },
+    "*": {
+        "mimeType": "image/x-mkcd-f4",
+        "dataEncoding": "base64",
+        "namespace": "myImages"
+    }
+}
