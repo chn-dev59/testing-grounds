@@ -14,6 +14,11 @@ let chargeLevel = 0
 let currentStage = 0
 let totalScore = 100
 
+// Tracking menu states and input density
+let inConsentMenu = true
+let totalButtonPresses = 0
+let wasAPressedLastFrame = false
+
 // Load High Score from memory
 let highScore = settings.readNumber("high_score") || 0
 
@@ -62,6 +67,9 @@ let player = sprites.create(frogIdle, SpriteKind.Player)
 player.ay = GRAVITY
 player.z = 100
 scene.cameraFollowSprite(player)
+
+// Make the frog completely invisible at boot up sequence
+player.setFlag(SpriteFlag.Invisible, true)
 
 function loadStage(index: number) {
     isCharging = false;
@@ -112,9 +120,27 @@ function loadStage(index: number) {
 
 // --- PHYSICS & END GAME LOGIC ---
 game.onUpdate(function () {
+    // Block gameplay updates entirely if still on the consent menu screen
+    if (inConsentMenu) {
+        if (controller.A.isPressed()) {
+            inConsentMenu = false
+            player.setFlag(SpriteFlag.Invisible, false) // Make the frog visible now!
+            loadStage(0) // Launch the game loop
+        } else if (controller.B.isPressed()) {
+            game.over(false) // Exit game completely
+        }
+        return
+    }
+
     if (totalScore <= 0) {
         showGameOver(false);
     }
+
+    let isAPressedNow = controller.A.isPressed()
+    if (isAPressedNow && !wasAPressedLastFrame) {
+        totalButtonPresses++
+    }
+    wasAPressedLastFrame = isAPressedNow
 
     let standing = false; let onWall = false
     for (let p of sprites.allOfKind(SpriteKind.Food)) {
@@ -154,7 +180,18 @@ function showGameOver(win: boolean) {
         highScore = totalScore;
         settings.writeNumber("high_score", highScore);
     }
-    game.showLongText((win ? "VICTORY!" : "GAME OVER") + "\n\nScore: " + totalScore + "\nHigh Score: " + highScore, DialogLayout.Center)
+
+    let totalSeconds = Math.max(1, Math.floor(game.runtime() / 1000));
+    let actionsPerMinute = Math.floor((totalButtonPresses / totalSeconds) * 60);
+
+    game.showLongText(
+        (win ? "VICTORY!" : "GAME OVER") + "\n\n" +
+        "Score: " + totalScore + "\n" +
+        "High Score: " + highScore + "\n" +
+        "Time: " + totalSeconds + "s\n" +
+        "BPM: " + actionsPerMinute,
+        DialogLayout.Center
+    )
     game.over(win);
 }
 
@@ -170,8 +207,24 @@ function nextLevel() {
     }
 }
 
-// --- UPDATED HUD & BACKGROUND ---
+// --- HUD & BACKGROUND ---
 game.onPaint(function () {
+    // Display the Consent Form Layout overlay if the player hasn't accepted yet
+    if (inConsentMenu) {
+        screen.fill(15)
+        screen.fillRect(10, 10, 140, 100, 1)
+        screen.fillRect(12, 12, 136, 96, 15)
+
+        screen.print("CONSENT FORM", 45, 20, 1)
+        screen.print("Do you consent to", 30, 42, 5)
+        screen.print("having your gameplay", 20, 52, 5)
+        screen.print("info tracked?", 44, 62, 5)
+
+        screen.print("Press (A) to AGREE", 28, 82, 2)
+        screen.print("Press (B) to DENY", 31, 94, 4)
+        return
+    }
+
     screen.fill(15)
     for (let i = 0; i < 15; i++) {
         let sx = (43 * i) % 160
@@ -198,7 +251,7 @@ game.onPaint(function () {
     for (let i = 0; i < 12; i++) {
         let angle = i * 30
         let vx = sunX + Math.cos(angle * Math.PI / 180) * 20
-        let vy = sunY + Math.sin(angle * Math.PI / 180) * 20 
+        let vy = sunY + Math.sin(angle * Math.PI / 180) * 20
         screen.drawLine(sunX, sunY, vx, vy, 5)
     }
     screen.fillCircle(sunX, sunY, 10, 1)
@@ -215,4 +268,5 @@ game.onPaint(function () {
     screen.print("SCORE: " + totalScore, 85, 4, 5)
 })
 
-loadStage(0)
+// Hide position coordinate initialization 
+player.setPosition(-50, -50)
