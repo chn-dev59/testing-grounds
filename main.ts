@@ -68,7 +68,6 @@ player.ay = GRAVITY
 player.z = 100
 scene.cameraFollowSprite(player)
 
-// Make the frog completely invisible at boot up sequence
 player.setFlag(SpriteFlag.Invisible, true)
 
 function loadStage(index: number) {
@@ -77,10 +76,38 @@ function loadStage(index: number) {
     player.sayText("");
     for (let s of sprites.allOfKind(SpriteKind.Food)) s.destroy()
     for (let b of sprites.allOfKind(SpriteKind.Enemy)) b.destroy()
+
     let data = levels[index]
     player.setPosition(data.spawnX, data.spawnY)
     player.vx = 0; player.vy = 0;
     player.setImage(frogIdle)
+
+    // Find the goal platform
+    let goalPlat: Platform = null
+    for (let p of data.platforms) {
+        if (p.platType == "goal") {
+            goalPlat = p
+            break
+        }
+    }
+
+    // Spawn a full-height goal safety pillar starting from level 2 (index 1) onwards
+    if (goalPlat != null && index > 0) {
+        // 20px wide, 180px tall matching the first level's boundary structure sizing
+        let goalBumper = image.create(20, 180)
+        goalBumper.fill(5) // Main blue fill color
+
+        // Render the golden striped alignment accent line patterns
+        for (let i = 0; i < 20; i += 2) {
+            goalBumper.drawLine(i, 0, i, 180, 4)
+        }
+        goalBumper.drawLine(1, 0, 1, 180, 1) // White trim line accent
+
+        let stopper = sprites.create(goalBumper, SpriteKind.Food)
+        // Position it right at the back end of the platform, stretching perfectly down the screen layout
+        stopper.setPosition(goalPlat.x + goalPlat.w + 10, 90)
+        stopper.z = 15
+    }
 
     for (let p of data.platforms) {
         let platImg = image.create(p.w, p.h)
@@ -112,7 +139,7 @@ function loadStage(index: number) {
         plat.z = 10
         if (p.platType == "goal") {
             let star = sprites.create(starImg, SpriteKind.Enemy)
-            star.setPosition(p.x + p.w / 2, p.y - 12)
+            star.setPosition(p.x + p.w / 2, p.y - 6)
             star.z = 11
         }
     }
@@ -120,14 +147,13 @@ function loadStage(index: number) {
 
 // --- PHYSICS & END GAME LOGIC ---
 game.onUpdate(function () {
-    // Block gameplay updates entirely if still on the consent menu screen
     if (inConsentMenu) {
         if (controller.A.isPressed()) {
             inConsentMenu = false
-            player.setFlag(SpriteFlag.Invisible, false) // Make the frog visible now!
-            loadStage(0) // Launch the game loop
+            player.setFlag(SpriteFlag.Invisible, false)
+            loadStage(0)
         } else if (controller.B.isPressed()) {
-            game.over(false) // Exit game completely
+            game.over(false)
         }
         return
     }
@@ -209,7 +235,6 @@ function nextLevel() {
 
 // --- HUD & BACKGROUND ---
 game.onPaint(function () {
-    // Display the Consent Form Layout overlay if the player hasn't accepted yet
     if (inConsentMenu) {
         screen.fill(15)
         screen.fillRect(10, 10, 140, 100, 1)
@@ -268,5 +293,4 @@ game.onPaint(function () {
     screen.print("SCORE: " + totalScore, 85, 4, 5)
 })
 
-// Hide position coordinate initialization 
 player.setPosition(-50, -50)
